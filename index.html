@@ -467,7 +467,10 @@ const canSpeak='speechSynthesis' in window;
 let voice=null;function pickVoice(){if(!canSpeak)return;const vs=speechSynthesis.getVoices().filter(v=>/^en[-_]US/i.test(v.lang));voice=vs.find(v=>/natural|google|samantha|aria|jenny/i.test(v.name))||vs[0]||null}
 if(canSpeak){pickVoice();speechSynthesis.addEventListener?.('voiceschanged',pickVoice)}
 function sayBtn(it){return canSpeak?`<button type="button" class="say" data-say="${it.id}" aria-label="Hear how to say ${esc(it.name)}" title="Hear it${SAY[it.name]?': '+esc(SAY[it.name][1]):''}">${SPK}</button>`:''}
-function speak(it,btn){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(SAY[it.name]?SAY[it.name][0]:it.name.replace('&',' and '));u.lang='en-US';u.rate=.8;if(voice)u.voice=voice;
+// Speak the real words (the voice already knows them); only spell out things it can't read.
+const SPEAKFIX={"E&J":"E and J","Tullamore D.E.W.":"Tullamore Dew","Seagram's VO":"Seagram's V O","B-52":"B fifty-two","Adios MF":"Adios M F","VOX":"Vox"};
+function realSpeak(t){t=String(t);if(SPEAKFIX[t])return SPEAKFIX[t];return t.replace(/\(.*?\)/g,' ').replace(/&/g,' and ').replace(/\//g,' or ').replace(/\s+/g,' ').trim()}
+function speak(it,btn){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(realSpeak(it.name));u.lang='en-US';u.rate=.8;if(voice)u.voice=voice;
   document.querySelectorAll('.say.on').forEach(b=>b.classList.remove('on'));if(btn){btn.classList.add('on');u.onend=u.onerror=()=>btn.classList.remove('on')}speechSynthesis.speak(u)}
 function speakText(t,btn){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.8;if(voice)u.voice=voice;
   document.querySelectorAll('.say.on').forEach(b=>b.classList.remove('on'));if(btn){btn.classList.add('on');u.onend=u.onerror=()=>btn.classList.remove('on')}speechSynthesis.speak(u)}
@@ -475,11 +478,11 @@ const SAYD={"Bocchi Ball": ["Botchy Ball", "BOTCH-ee ball"], "Cuba Libre": ["Koo
 const SHEETS={"Lesson 1": "Lesson 1 - Liquor and mixed drinks", "Lesson 2": "Lesson 2 - Cream Drinks", "Lesson 3": "Lesson 3 - Martini and Manhattan", "Lesson 4.5": "Lesson 4.5 - Wine and Hot Drinks", "Lesson 7": "Lesson 7 - Two Liquor Drinks", "Lesson 8": "Lesson 8 - Sours", "Lesson 9": "Lesson 9 - Exotics", "Lesson 10": "Lesson 10 - Shooters"};
 function cleanDrink(d){return d.replace(/\s*\(handwritten[^)]*\)/i,'').replace(/"/g,'').replace(/\s*\/\s*/g,' or ').replace(/\s+/g,' ').trim()}
 function drinkSay(d){const c=cleanDrink(d).replace(/\s*\([^)]*\)/g,'').trim();return SAYD[c]||SAYD[cleanDrink(d)]||null}
-function drinkSpoken(d){const x=drinkSay(d);return x?x[0]:cleanDrink(d).replace(/[()]/g,', ').replace(/&/g,' and ')}
-function bottleSpoken(n){return SAY[n]?SAY[n][0]:n.replace(/&/g,' and ')}
+function drinkSpoken(d){const c=cleanDrink(d);return SPEAKFIX[c]||c.replace(/[()]/g,', ').replace(/&/g,' and ')}
+function bottleSpoken(n){return realSpeak(n)}
 const SAYW={"Tequila": "tuh kee luh", "Cognac": "cone yak", "Liqueur": "lih kur", "Liqueurs": "lih kurs", "Crème de": "krem duh", "Creme de": "krem duh", "Cacao": "kuh-kow", "Menthe": "mahnt", "Noyaux": "nwah yoh", "Cassis": "kah sees", "Curaçao": "kyoor uh sow", "Vermouth": "ver mooth", "Schnapps": "shnahps", "Grenadine": "gren uh deen", "Kahlúa": "kuh loo uh", "Galliano": "gal yah no", "Cointreau": "kwahn troh", "Grand Marnier": "grahn marn yay", "Chambord": "sham bore", "Drambuie": "dram boo ee", "Jägermeister": "yay ger my ster", "Rumplemintz": "Rumple mints", "Goldschläger": "gold shlay ger", "Frangelico": "fran jel ih ko", "Sambuca": "sam boo kuh", "Amaretto": "am uh ret oh", "Midori": "mih door ee", "Malibu": "mal ih boo", "Tia Maria": "tee uh muh ree uh", "Myer's": "My-ers", "Bacardi": "buh kar dee", "Jameson": "Jay-muh-sun", "Guinness": "Gin-iss", "Campari": "kahm par ee", "Bourbon": "bur bun", "Scotch": "Scotch", "Brandy": "Brandy", "Sloe Gin": "Slow Gin", "Champagne": "sham pain", "Purée": "pyoo ray", "Rose's": "Roses", "Seagram's": "See-grums", "Pucker": "Pucker"};
 const CATHINT={"Vodka": "VOD-kuh", "Gin": "JIN", "Rum": "RUM", "Tequila": "tuh-KEE-luh", "Brandy & Cognac": "BRAN-dee & KOHN-yak", "Whiskey": "WIS-kee", "Liqueur": "lih-KUR", "Wine, Vermouth & Beer": "wine, ver-MOOTH & beer", "Cognac": "KOHN-yak", "Brandy": "BRAN-dee", "Bourbon Whiskey": "BUR-bun WIS-kee", "Scotch Whiskey": "SKOTCH WIS-kee", "Irish Whiskey": "EYE-rish WIS-kee", "Tennessee Whiskey": "ten-uh-SEE WIS-kee", "Canadian Whiskey": "kuh-NAY-dee-un WIS-kee", "Blended Whiskey": "BLEN-did WIS-kee", "Vermouth": "ver-MOOTH", "Wine": "WINE", "Beer": "BEER"};
-function ingSpoken(t){if(SAY[t])return SAY[t][0];let x=' '+t.replace(/\(.*?\)/g,' ').replace(/&/g,' and ').replace(/\//g,' or ')+' ';
+function ingSpoken(t){return realSpeak(t);let x=' '+t.replace(/\(.*?\)/g,' ').replace(/&/g,' and ').replace(/\//g,' or ')+' ';
   Object.keys(SAYW).sort((a,b)=>b.length-a.length).forEach(k=>{x=x.split(k).join(SAYW[k])});return x.replace(/\s+/g,' ').trim()}
 function catBtn(c){return textBtn(ingSpoken(c),c)}
 function textBtn(t,label){return canSpeak?`<button type="button" class="say" data-sayt="${esc(t)}" aria-label="Hear how to say ${esc(label)}" title="Hear it">${SPK}</button>`:''}
@@ -725,5 +728,4 @@ function show(){const v=VIEWS.includes(location.hash.slice(1))?location.hash.sli
 window.addEventListener('hashchange',show);
 renderShelf();show();
 </script>
-
 </html>
